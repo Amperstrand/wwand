@@ -116,7 +116,20 @@ export function install(self, o)
 	step_services = () => {
 		self.set_state('INIT_SERVICES');
 		self.ctl.request('GET_VERSION_INFO', {}, (err, data) => {
-			if (err)
+			// RG502Q-EA (NR7101, RG502QEAACR13A03M4G_ZYXEL): the QMI server
+			// never answers CTL GET_VERSION_INFO — observed live with uqmi
+			// (client dies at its first version query) and with stock wwand
+			// ("failed in version_info: timeout") while quectel-CM, which
+			// never sends this message, talks every service fine
+			// (Amperstrand bench, 2026-11-03). Treat the query like SYNC:
+			// best-effort. An empty service table is carried forward;
+			// client allocation below is the real bring-up gate — a dead
+			// modem still fails there.
+			if (err?.error == 'timeout') {
+				log('warn', 'GET_VERSION_INFO unanswered (timeout) — continuing without service versions (RG502Q-EA quirk)');
+				data = { services: [] };
+			}
+			else if (err)
 				return fail('version_info', err);
 
 			self.services = {};
