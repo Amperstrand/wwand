@@ -114,8 +114,24 @@ return {
 		// wwand did the rename and therefore knows both names.
 		if (!fx.exists(sprintf('/sys/class/net/%s', vendor_child(netdev, 1))) &&
 		    !(info?.kernel_netdev &&
-		      fx.exists(sprintf('/sys/class/net/%s', vendor_child(info.kernel_netdev, 1)))))
-			return false;
+		      fx.exists(sprintf('/sys/class/net/%s', vendor_child(info.kernel_netdev, 1))))) {
+			// Neither stem has a <stem>_1 — but a restart of a working box
+			// may already have renamed channel 1 onto its stable L3 name,
+			// which links() below adopts by name+MAC once this probe has
+			// claimed the parent. The driver still lists the children it
+			// created in RMNET_INFO (under the names it gave them, which it
+			// never updates, whatever they have been renamed to since), so
+			// when it answers with a non-empty list the children exist and
+			// this datapath claims the parent. Without this, every restart
+			// of a working box ends in mux_backend_unavailable: the probe
+			// fails on the rename its own earlier run did, and links()'s
+			// renamed-child adoption can never fire (bench-found 2026-11-04,
+			// NR7101/RG502Q: wwan0_1 renamed to wwand0, then "failed in
+			// datapath: mux_backend_unavailable" on every start).
+			let rinfo = (type(fx?.rmnet_info) == 'function') ? fx.rmnet_info(netdev) : null;
+
+			return !!(rinfo && length(rinfo?.ifname ?? []) > 0);
+		}
 
 		// Claimed either way — these children need adopting, not creating. But a
 		// missing shim cannot be fixed after the fact (the driver captured the
