@@ -136,7 +136,7 @@ function qmap_mode(fx, netdev)
 	return v ? +trim(v) : 0;
 }
 
-const datapath_impl = {
+return {
 	proto: [ 'qmi' ],
 
 	description: 'QMAP over the vendor qmi_wwan_q (Qualcomm NSS offload when the shim is loaded)',
@@ -470,21 +470,3 @@ const datapath_impl = {
 		return out;
 	},
 };
-
-// 25.12 ucode compatibility: this add-on used the top-level `return {...}`
-// single-export module pattern (snapshot ucode); 25.12.6's ucode rejects it
-// ("return must be inside function body") on module load. Re-export the
-// object's members so the module namespace carries the same shape the
-// datapath contract expects (Amperstrand bench, 2026-11-04).
-export const proto = datapath_impl.proto;
-export const description = datapath_impl.description;
-export const probe = datapath_impl.probe;
-export const child_name = datapath_impl.child_name;
-export const map_id = datapath_impl.map_id;
-export const programs_parent = datapath_impl.programs_parent;
-export const aggregate = datapath_impl.aggregate;
-export const qmap = datapath_impl.qmap;
-export const qmap_versions = datapath_impl.qmap_versions;
-export const prune = datapath_impl.prune;
-export const status = datapath_impl.status;
-export const links = datapath_impl.links;
