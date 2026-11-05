@@ -807,12 +807,8 @@ export function create(opts)
 				let sim_gen = self._gen;
 				let finish = () => cb ? cb(changed) : null;
 
-				log('notice', 'attach profile changed after sim reapply, cycling radio to re-attach');
-				opmode_ours('low_power', () => {
-					settle_after(sim_gen, () => {
-						online_unless_parked(finish);
-					}, finish);
-				});
+				log('notice', 'attach profile changed after sim reapply (bench patch: not cycling radio — a radio cycle resets PLMN selection and knocks the modem off the network it just registered on; the APN applies without re-attach)');
+				finish();
 			});
 		}, { ...(opts ?? {}), fresh: true });
 	};
